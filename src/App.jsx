@@ -1,17 +1,17 @@
 import React from "react";
 import "./App.css";
-import Description from "./components/Header";
-import Demo from "./components/Form";
+import Hero from "./components/Hero";
+import Content from "./components/Content";
 
 const App = () => {
   return (
     <main>
       <div className="main">
-        <div className="gradient"></div>
+        <div className="gradient" />
       </div>
       <div className="app">
-        <Description />
-        <Demo />
+        <Hero />
+        <Content />
       </div>
     </main>
   );
