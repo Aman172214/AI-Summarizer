@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { copy, linkIcon, loader, submitIcon } from "../assets";
+import { copy, linkIcon, loader, submitIcon, tick, close } from "../assets";
 import { useLazyGetSummaryQuery } from "../services/article";
 
 const Content = () => {
   const [article, setArticle] = useState({ url: "", summary: "" });
-  const [allURLs, setAllURLs] = useState([]);
+  const [allArticles, setAllArticles] = useState([]);
+  const [copied, setCopied] = useState();
   const [getSummary, { isLoading, error }] = useLazyGetSummaryQuery();
 
   useEffect(() => {
-    const storedURLs = JSON.parse(localStorage.getItem("articles"));
+    const storedArticles = JSON.parse(localStorage.getItem("articles"));
 
-    if (storedURLs) {
-      setAllURLs(storedURLs);
+    if (storedArticles) {
+      setAllArticles(storedArticles);
     }
   }, []);
 
@@ -24,13 +25,30 @@ const Content = () => {
     const { data } = await getSummary({ articleUrl: article.url });
     if (data?.summary) {
       const newArticle = { ...article, summary: data.summary };
-      const newAllURLs = [newArticle, ...allURLs];
+      const newAllArticles = [newArticle, ...allArticles];
 
       setArticle(newArticle);
-      setAllURLs(newAllURLs);
+      setAllArticles(newAllArticles);
 
-      localStorage.setItem("articles", JSON.stringify(newAllURLs));
+      localStorage.setItem("articles", JSON.stringify(newAllArticles));
     }
+  };
+
+  const copyHandler = (copySummary) => {
+    setCopied(copySummary);
+    navigator.clipboard.writeText(copySummary);
+    setTimeout(() => {
+      setCopied(false);
+    }, 5000);
+  };
+
+  const removeHandler = (url) => {
+    const filteredArticles = allArticles.filter(
+      (article) => article.url !== url
+    );
+    setAllArticles(filteredArticles);
+    setArticle(filteredArticles);
+    localStorage.removeItem("articles");
   };
 
   return (
@@ -62,23 +80,23 @@ const Content = () => {
         </form>
         {/* Display URLs */}
         <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
-          {allURLs.map((article, index) => (
-            <div
-              key={index}
-              onClick={() => setArticle(article)}
-              className="link_card"
-            >
-              <div className="copy_btn">
+          {allArticles.map((article, index) => (
+            <>
+              <div key={index} className="link_card">
+                <p
+                  className="flex-1 font-satoshi text-blue-700 font-medium text-sm truncate"
+                  onClick={() => setArticle(article)}
+                >
+                  {article.url}
+                </p>
                 <img
-                  src={copy}
-                  alt="copy_icon"
-                  className="w-[40%] h-[40%] object-contain"
+                  src={close}
+                  alt="close"
+                  className="w-[2%] h-[2%]"
+                  onClick={() => removeHandler(article.url)}
                 />
               </div>
-              <p className="flex-1 font-satoshi text-blue-700 font-medium text-sm truncate">
-                {article.url}
-              </p>
-            </div>
+            </>
           ))}
         </div>
         {/* Display Summary */}
@@ -107,6 +125,18 @@ const Content = () => {
                   <p className="font-inter font-medium text-sm text-gray-700">
                     {article.summary}
                   </p>
+                  <div
+                    className="copy_btn absolute bottom-1 right-1"
+                    onClick={() => {
+                      copyHandler(article.summary);
+                    }}
+                  >
+                    <img
+                      src={copied === article.summary ? tick : copy}
+                      alt="copy_icon"
+                      className="w-[60%] h-[60%] object-contain"
+                    />
+                  </div>
                 </div>
               </div>
             )
